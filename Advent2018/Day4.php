@@ -91,10 +91,26 @@
 
 $lines = file('day4data.txt');
 $calendar = array();
+
+// populate the calendar array
 foreach($lines as $line){
     $calendar []= array(
         "date"=>(string)substr($line,1,10),
-        "time"=>(string)substr($line,15,2),
+        "time"=>(int)substr($line,15,2),
         "note"=>(string)substr($line,19)
         );
+
 }
+
+// sort the calendar array by date and then time
+
+
+print_r($calendar);
+// who was asleep the most?
+    // one guard serves each day. identify them by date
+    // each wake up time can be called positive
+    // each fall asleep time can be called negative
+    // then you can sum them by date
+
+// what minute were they asleep the most?
+// what's the product of the two?
