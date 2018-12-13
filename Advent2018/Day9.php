@@ -78,3 +78,44 @@
  * 30 players; last marble is worth 5807 points: high score is 37305
  * What is the winning Elf's score?
  * */
+
+// the number of elves playing each round
+$player_count = 10;
+//$player_count = 431;
+$final_marble_value = 1618;
+//$final_marble_value = 70950;
+
+// an array to catch each elf-player's score
+// should be of size $player_count + 1 (the zero'th move doesn't count as a player move,
+// and the zero'th element of the array doesn't count as a player
+$player_array = [];
+$current_player = 0;
+
+// an array to represent the board where each element is a board position and the value of
+// the marble in that position
+$board_array = [];
+$current_board_position = 0;
+$marble_value = 0;
+
+// walk through the list of marbles until the $final_marble is set
+for($x=0;$x<=$final_marble_value;++$x){
+    // grab a new marble
+    ++$marble_value;
+
+    // determine whose turn it is
+    if($current_player <= $player_count){
+        ++$current_player;
+    } else {
+        $current_player = 1;
+    }
+
+
+    if($marble_value%23==0){ // is this a scoring round?
+        $player_array[$current_player] += $marble_value;
+        // find the board position -7 from $current_board_position, remove it, and add it to $player_array[$current_player's] score
+        // move the $current_board_position to -6 it's current location
+    } else {
+        // insert into
+    }
+}
+
