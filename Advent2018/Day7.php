@@ -1,5 +1,6 @@
 <?php
 /**
+ * Author: Mattie112
  * Date: 12/7/18
  * Time: 5:16 PM
  */
@@ -67,43 +68,194 @@
 // start run timer
 $time_start = microtime(true);
 
-// build an array to catch dependencies from problem setup
-$dependencies = [];
+// the order in which steps should be executed for part one
+$step_order = "";
 
-// build an array to catch unique steps from problem setup
-$steps = [];
+// a tree of dependent steps from the problem data
+$step_tree = [];
 
-// ingest the puzzle input into an array of 2-element arrays whose keys are x and y
-$data = file('day7datasmallset',FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES);
+// a list of steps that don't currently have any unexecuted dependent steps
+$open_step = [];
 
-// populate the dependencies array
-foreach ($data as $line) {
-    $dependencies[] = array(
-        "step"=> substr($line,5,1),
-        "dependency"=> substr($line,36,1));
+// ingest problem data into a tree of steps where the first array layer is the step
+// and its values are dependencies.
+if ($file = fopen(__DIR__ . "/day7data", "rb")) {
+    while (!feof($file)) {
+        $line = trim(fgets($file));
+        if (preg_match("@Step (.) .* step (.)@", $line, $matches)) {
+            $parent = $matches[1];
+            $child = $matches[2];
+            $step_tree[$parent][] = $child;
+        }
+    }
+    fclose($file);
 }
 
-// populate the steps array with unique steps
-$steps = array_map(function() {return array("dependencies"=>PHP_INT_MAX,"executed"=>0);}, array_count_values(array_column($dependencies,'step')));
+// Find parents that are not anyones children
+while (count($step_tree) > 0) {
 
+    foreach ($step_tree as $parent => $children) {
+        $is_child = false;
+        foreach ($step_tree as $subparent => $subchildren) {
+            if ($subparent === $parent) {
+                continue;
+            }
+            foreach ($subchildren as $subchild) {
+                if ($subchild === $parent) {
+                    $is_child = true;
+                    break;
+                }
+            }
+        }
 
+        if (!$is_child) {
+            if (!in_array($parent, $open_step, true)) {
+                $open_step[] = $parent;
+            }
+        }
+    }
 
+    // Sort steps we could execute this turn alphabetically
+    sort($open_step);
 
-// build a function that determines how many dependencies remain for a step
-function has_dependencies($step, &$steps){
+    $this_child = reset($open_step);
+    $step_order .= $this_child;
+// If this is the last element make sure to add all children
+    if (count($step_tree) === 1) {
+        foreach (reset($step_tree) as $item) {
+            $step_order .= $item;
+        }
+    }
 
-    return FALSE;
+    unset($open_step[0]);
+    unset($step_tree[$this_child]);
 }
 
+// Publish answer for the user
+echo "The first part goes in this order: " . $step_order . "\n";
 
-// build a function to determine the alphabetically first step to have no dependencies
-function next_free_step(){
-    return 'A';
+// stop run timer
+echo "First part run time (seconds): " . (microtime(true) - $time_start) . "\n";
+
+
+
+
+// start second run timer
+$time_start2 = microtime(true);
+
+// For part #2
+$letters = array_merge([0 => 0], range('A', 'Z'));
+$letters = array_flip($letters);
+unset($letters[0]);
+// Setup part #2
+$letter_time = 60;
+$worker_amount = 5;
+if ($file = fopen(__DIR__ . "/day7-input.txt", "rb")) {
+    while (!feof($file)) {
+        $line = trim(fgets($file));
+        if (preg_match("@Step (.) .* step (.)@", $line, $matches)) {
+            $parent = $matches[1];
+            $child = $matches[2];
+            $step_tree[$parent][] = $child;
+        }
+    }
+    fclose($file);
+}
+// False = idle
+// True = working
+// int = seconds busy
+$workers = [];
+for ($i = 1; $i <= $worker_amount; $i++) {
+    $workers[$i] = [false, 0, ""];
+}
+$total_seconds = 0;
+$todo = [];
+$in_progress = [];
+
+// Find parents that are not anyones children
+while (count($step_tree) > 0) {
+    // Only count the time once no matter how many workers
+    $counted = false;
+    foreach ($workers as $id => $elem) {
+        if ($workers[$id][0] === true) {
+            if (!$counted) {
+                // Only add work time for a single worker as it does not matter how many are working in paralel
+                $total_seconds++;
+                $counted = true;
+            }
+            $workers[$id][1]--;
+            if ($workers[$id][1] === 0) {
+                $workers[$id][0] = false;
+                echo "Worker " . $id . " is free again (finished " . $workers[$id][2] . ")" . PHP_EOL;
+                $step_order .= $workers[$id][2];
+                // When done don't forget to wait for the last job to finish
+                if (count($step_tree) === 1) {
+                    foreach (reset($step_tree) as $item) {
+                        $step_order .= $item;
+                        $total_seconds += $letter_time + $letters[$item];
+                    }
+                }
+                echo $step_order . PHP_EOL;
+                unset($step_tree[$workers[$id][2]]);
+            }
+        }
+    }
+    // Only continue when there are free workers
+    $free_worker = false;
+    foreach ($workers as $id => [$status, $seconds, $letter]) {
+        if ($status === false) {
+            $free_worker = true;
+            break;
+        }
+    }
+    if (!$free_worker) {
+        continue;
+    }
+    $not_children = [];
+    foreach ($step_tree as $parent => $children) {
+        $is_child = false;
+        foreach ($step_tree as $subparent => $subchildren) {
+            if ($subparent === $parent) {
+                continue;
+            }
+            foreach ($subchildren as $subchild) {
+                if ($subchild === $parent) {
+                    $is_child = true;
+                    break;
+                }
+            }
+        }
+        if (!$is_child) {
+//            echo $parent . " is not a child" . PHP_EOL;
+            if (!in_array($parent, $not_children, true)) {
+                $not_children[] = $parent;
+            }
+        }
+    }
+// First letter (in the alphabet) goes first
+    sort($not_children);
+    foreach ($not_children as $elem) {
+        if (!isset($todo[$elem])) {
+            $todo[$elem] = true;
+        }
+    }
+    foreach ($todo as $not_a_child => $_tmp) {
+        if (!isset($in_progress[$not_a_child])) {
+            foreach ($workers as $id => [$status, $seconds]) {
+                if ($status === false) {
+                    echo "Assigning job " . $not_a_child . " to worker " . $id . " for " . ($letters[$not_a_child] + $letter_time) . " seconds" . PHP_EOL;
+                    // We have a free worker!!! yeah! let's assign a job!
+                    $workers[$id] = [true, $letters[$not_a_child] + $letter_time, $not_a_child,];
+                    $todo = array_diff($todo, [$not_a_child]);
+                    $in_progress[$not_a_child] = true;
+                    break;
+                }
+            }
+        }
+    }
 }
 
+echo "The second part goes in this order: " . $step_order . "\n";
 
-// build a function to 'run' a step, which finds the next step to have no dependencies,
-// and mark it as run
-function run_next_step(){
-    return 0;
-}
+// stop the second run timer
+echo "\nSecond part run time (seconds): " . (microtime(true) - $time_start2) . "\n";
