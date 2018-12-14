@@ -83,7 +83,7 @@ $time_start = microtime(true);
 // the number of elves playing each round
 $player_count = 431;
 // the value of the last marble to be played
-$last_marble_value = 7095000;
+$last_marble_value = 70950;
 
 // an array to catch each elf-player's score
 // should be of size $player_count + 1 (the zero'th move doesn't count as a player move,
@@ -97,19 +97,24 @@ $board_array = [];
 $current_board_position = 0;
 
 // walk through the list of marbles until the $final_marble is set
-for($x=0;$x<=$last_marble_value;++$x){
+for ($x = 0; $x <= $last_marble_value; ++$x) {
     // play the new marble
-    if($x%23==0&&$x>0){ // is this a scoring round?
+    $tracker_x = (float)$x;
+    $tracker_last = (float)$last_marble_value;
+
+    if ($x % 23 == 0 && $x > 0) { // is this a scoring round?
         // this player scored points. instead of placing the first marble on the board, first add its value to the current player's score
-        if(isset($player_array[$current_player])){
+        if (isset($player_array[$current_player])) {
             $player_array[$current_player] += $x;
         } else {
             $player_array[$current_player] = $x;
         }
 
         // second, find the marble -7 from the last move and add it to the player's score as well
-        $current_board_position-=9;
-        if($current_board_position<0){$current_board_position+=count($board_array);}
+        $current_board_position -= 9;
+        if ($current_board_position < 0) {
+            $current_board_position += count($board_array);
+        }
         $player_array[$current_player] += $board_array[$current_board_position];
 
         // then remove that marble from the board
@@ -123,14 +128,20 @@ for($x=0;$x<=$last_marble_value;++$x){
 
     $current_board_position += 2; // move the $current_board_position forward by 2
     $board_length = count($board_array);
-    if($current_board_position>$board_length){$current_board_position-=$board_length;}
+    if ($current_board_position > $board_length) {
+        $current_board_position -= $board_length;
+    }
 
     // pass play to the next player
     ++$current_player;
-    if($current_player > $player_count) {
+    if ($current_player > $player_count) {
         $current_player = 1;
     }
 }
 
 echo "First part: " . max($player_array) . PHP_EOL;
 echo "Runtime 1 (seconds): " . (microtime(true) - $time_start) . "\n";
+
+// I found a solution from /u/PotentialSleep that's much better performant and used it to get my
+// part 2 solution
+

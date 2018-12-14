@@ -18,7 +18,8 @@
  *
  * position=< 9,  1> velocity=< 0,  2>
  * position=< 7,  0> velocity=<-1,  0>
- * position=< 3, -2> velocity=<-1,  1>position=< 6, 10> velocity=<-2, -1>
+ * position=< 3, -2> velocity=<-1,  1>
+ * position=< 6, 10> velocity=<-2, -1>
  * position=< 2, -4> velocity=< 2,  2>
  * position=<-6, 10> velocity=< 2, -2>
  * position=< 1,  8> velocity=< 1, -1>
@@ -145,4 +146,72 @@
  *
  * What message will eventually appear in the sky?
  *
- * */
+ *  */
+
+// * start the run timer for the first part
+$time_start = microtime(true);
+
+// bunch of variables
+$puzzle_data_raw = [];
+$puzzle_data = $puzzle_data2 = [];
+$area_current = $area_last = PHP_INT_MAX;
+$seconds_passed = 0;
+$seconds_min_area = 0;
+$dimensions_last = $dimensions_current = [];
+$display_data = [];
+
+// capture puzzle data
+$puzzle_data_raw = file('day10datasmallset');
+foreach($puzzle_data_raw as $row) {
+    preg_match_all('/(-?\d+)/',$row,$matches);
+    $puzzle_data[] = $puzzle_data2[] =$matches[0];
+}
+
+// find the second at which the set is transformed to its smallest size
+while($area_current<=$area_last){
+    $area_last = $area_current;
+    $dimensions_last = $dimensions_current;
+    $dimensions_current = one_second_transform($puzzle_data, $seconds_passed);
+    $area_current = $dimensions_current['minArea'];
+    ++$seconds_passed;
+};
+$seconds_min_area = $seconds_passed - 1;
+
+print_r($dimensions_last);
+print_r($dimensions_current);
+
+
+// find the minX and minY for the smallest set, and their offset from (0,0)
+
+//echo "minX is : "  . $dimensions_last['minX'] . PHP_EOL;
+//echo "minY is : " . $dimensions_last['minY'] . PHP_EOL;
+
+//foreach($puzzle_data as $row){
+//    $display_data[$row[0]-$dimensions_last['minX']][] = $row[1]-$dimensions_last['minY'];
+//}
+//print_r($display_data);
+
+function one_second_transform(&$puzzle_data,$seconds_passed){
+    foreach($puzzle_data as $key=>$line) {
+        $puzzle_data[$key][0] += $line[2] * $seconds_passed;
+        $puzzle_data[$key][1] += $line[3] * $seconds_passed;
+    }
+
+    $minX = min(array_column($puzzle_data,0));
+    $maxX = max(array_column($puzzle_data,0));
+    $minY = min(array_column($puzzle_data,1));
+    $maxY = max(array_column($puzzle_data,1));
+    $minArea = abs($minX - $maxX) * abs($minY - $maxY);
+
+    return array(
+        'minX' => $minX,
+        'maxX' => $maxX,
+        'minY' => $minY,
+        'maxY' => $maxY,
+        'minArea'=> $minArea
+    );
+}
+
+// * stop the run timer for the first part
+echo "Runtime 1 (seconds): " . (microtime(true) - $time_start) . "\n";
+
