@@ -78,12 +78,12 @@
  * 30 players; last marble is worth 5807 points: high score is 37305
  * What is the winning Elf's score?
  * */
+$time_start = microtime(true);
 
 // the number of elves playing each round
-$player_count = 10;
-//$player_count = 431;
-$final_marble_value = 1618;
-//$final_marble_value = 70950;
+$player_count = 431;
+// the value of the last marble to be played
+$last_marble_value = 7095000;
 
 // an array to catch each elf-player's score
 // should be of size $player_count + 1 (the zero'th move doesn't count as a player move,
@@ -95,44 +95,42 @@ $current_player = 0;
 // the marble in that position
 $board_array = [];
 $current_board_position = 0;
-$marble_value = 0;
 
 // walk through the list of marbles until the $final_marble is set
-for($x=0;$x<=$final_marble_value;++$x){
-    // grab a new marble
-    ++$marble_value;
+for($x=0;$x<=$last_marble_value;++$x){
+    // play the new marble
+    if($x%23==0&&$x>0){ // is this a scoring round?
+        // this player scored points. instead of placing the first marble on the board, first add its value to the current player's score
+        if(isset($player_array[$current_player])){
+            $player_array[$current_player] += $x;
+        } else {
+            $player_array[$current_player] = $x;
+        }
 
-    // determine whose turn it is
-    if($current_player <= $player_count){
-        ++$current_player;
+        // second, find the marble -7 from the last move and add it to the player's score as well
+        $current_board_position-=9;
+        if($current_board_position<0){$current_board_position+=count($board_array);}
+        $player_array[$current_player] += $board_array[$current_board_position];
+
+        // then remove that marble from the board
+        unset($board_array[$current_board_position]);
+        $board_array = array_values($board_array);
     } else {
-        $current_player = 1;
+        // insert a marble marked $marble_value into the $board_array at this $current_board_position
+        $new_marble = [$x];
+        array_splice($board_array, $current_board_position, 0, $new_marble);
     }
 
-    // have that player take their turn
-    if($marble_value%23==0){ // is this a scoring round?
-        // this player scored points. instead of placing the first marble on
-        // the board, first add its value to the current player's score
-        if(isset($player_array[$current_player])){
-            $player_array[$current_player] = $marble_value;
-        } else {
-            $player_array[$current_player] += $marble_value;
-        }
-        // second, find the marble -7 from $current_board_position, and add it
-        // to the player's score as well
-        $player_array[$current_player] += $board_array[$current_board_position-7];
+    $current_board_position += 2; // move the $current_board_position forward by 2
+    $board_length = count($board_array);
+    if($current_board_position>$board_length){$current_board_position-=$board_length;}
 
-        // then remove it from the board
-        unset($board_array[$current_board_position-7]);
-        $board_array = array_values($board_array);
-
-        // and then update the board position accordingly
-        $current_board_position -= 6;
-    } else {
-        // move the $current_board_position forward by 2
-        //      unless the new position is longer than the $board_array
-        // have the $current_player insert a marble of $marble_value into the
+    // pass play to the next player
+    ++$current_player;
+    if($current_player > $player_count) {
+        $current_player = 1;
     }
 }
 
 echo "First part: " . max($player_array) . PHP_EOL;
+echo "Runtime 1 (seconds): " . (microtime(true) - $time_start) . "\n";
