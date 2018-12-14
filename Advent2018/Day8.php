@@ -1,5 +1,6 @@
 <?php
 /**
+ * Author: lifted from vuryss
  * Date: 12/11/2018
  * Time: 12:07 PM
  */
@@ -52,11 +53,22 @@
  * What is the sum of all metadata entries?
  * */
 
-$input = trim(file_get_contents('day8data'));
-$input = $input2 = explode(' ', $input);
-$nodes = [];
-echo 'Answer 1: ' . tree($input) . PHP_EOL;
+// start the run timer
+$time_start = microtime(true);
 
+// fetch puzzle input from file
+$input = trim(file_get_contents('day8data'));
+
+// improve puzzle input into an array of number-entries, one for each step
+$input = $input2 = explode(' ', $input);
+
+// program code calls recursive function over puzzle input
+echo 'Answer 1: ' . tree($input) . "\n";
+echo "Runtime 1 (seconds): " . (microtime(true) - $time_start) . "\n";
+
+// recursive function builds a tree out of input data
+// the head of the function navigates the head-parts of each conflated node set
+// as the tail unwinds, it tots up the value of metadata entries within each node
 function tree(&$input) {
     $children = $input[0];
     $metadata = $input[1];
@@ -93,6 +105,11 @@ function tree(&$input) {
  * A child node can be referenced multiple time and counts each time it is
  * referenced. A metadata entry of 0 does not refer to any child node.
  *
+ * 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2
+ * A----------------------------------
+ *     B----------- C-----------
+ *                      D-----
+ *
  * For example, again using the above nodes:
  *
  * Node C has one metadata entry, 2. Because node C has only one child node, 2 
@@ -106,3 +123,34 @@ function tree(&$input) {
  *
  * What is the value of the root node?
  */
+
+
+// restart the run timer
+$time_start = microtime(true);
+echo 'Answer 2: ' . tree2($input2) . "\n";
+echo "Runtime 2 (seconds): " . (microtime(true) - $time_start) . "\n";
+
+function tree2(&$input) {
+    $children = $input[0];
+    $metadata = $input[1];
+    $input = array_slice($input, 2);
+    $sum = 0;
+    if ($children == 0) {
+        for ($i = 0; $i < $metadata; $i++) {
+            $sum += $input[$i];
+        }
+        $input = array_slice($input, $metadata);
+        return $sum;
+    }
+    $childValues = [];
+    for ($i = 0; $i < $children; $i++) {
+        $childValues[$i + 1] = tree2($input);
+    }
+    for ($i = 0; $i < $metadata; $i++) {
+        if (isset($childValues[$input[$i]])) {
+            $sum += $childValues[$input[$i]];
+        }
+    }
+    $input = array_slice($input, $metadata);
+    return $sum;
+}

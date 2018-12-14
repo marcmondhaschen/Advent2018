@@ -109,13 +109,30 @@ for($x=0;$x<=$final_marble_value;++$x){
         $current_player = 1;
     }
 
-
+    // have that player take their turn
     if($marble_value%23==0){ // is this a scoring round?
-        $player_array[$current_player] += $marble_value;
-        // find the board position -7 from $current_board_position, remove it, and add it to $player_array[$current_player's] score
-        // move the $current_board_position to -6 it's current location
+        // this player scored points. instead of placing the first marble on
+        // the board, first add its value to the current player's score
+        if(isset($player_array[$current_player])){
+            $player_array[$current_player] = $marble_value;
+        } else {
+            $player_array[$current_player] += $marble_value;
+        }
+        // second, find the marble -7 from $current_board_position, and add it
+        // to the player's score as well
+        $player_array[$current_player] += $board_array[$current_board_position-7];
+
+        // then remove it from the board
+        unset($board_array[$current_board_position-7]);
+        $board_array = array_values($board_array);
+
+        // and then update the board position accordingly
+        $current_board_position -= 6;
     } else {
-        // insert into
+        // move the $current_board_position forward by 2
+        //      unless the new position is longer than the $board_array
+        // have the $current_player insert a marble of $marble_value into the
     }
 }
 
+echo "First part: " . max($player_array) . PHP_EOL;
