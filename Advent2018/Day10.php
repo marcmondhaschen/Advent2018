@@ -161,7 +161,7 @@ $dimensions_last = $dimensions_current = [];
 $display_data = [];
 
 // capture puzzle data
-$puzzle_data_raw = file('day10datasmallset');
+$puzzle_data_raw = file('day10data');
 foreach($puzzle_data_raw as $row) {
     preg_match_all('/(-?\d+)/',$row,$matches);
     $puzzle_data[] = $puzzle_data2[] =$matches[0];
